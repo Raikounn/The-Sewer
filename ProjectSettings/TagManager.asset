@@ -8,6 +8,8 @@ TagManager:
   - Floor
   - Roof
   - Ladder
+  - Speedb
+  - Jumpb
   layers:
   - Default
   - TransparentFX
