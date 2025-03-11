@@ -26,8 +26,9 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private bool underRoof = false;
     [SerializeField] private bool isCrouching = false;
 
+    PowerUp powerUp1;
+    PowerUp powerUp2;
 
-    
     private KeyCode sprintKey = KeyCode.LeftShift;
     private CharacterController controller;
 
@@ -35,6 +36,8 @@ public class PlayerController : MonoBehaviour
     {
         stamina = maxStamina;
         sprintSpeed = movSpeed;
+        powerUp1 = new PowerUp(10f, "JumpBoost");
+        powerUp2 = new PowerUp(5f, "SpeedBoost");
     }
 
     // Start is called before the first frame update
@@ -172,6 +175,29 @@ public class PlayerController : MonoBehaviour
         StartCoroutine(RegenStamina());
     }
 
+    IEnumerator DeactivateSpeedBuff()
+    {
+        float counter;
+        counter = powerUp1.duration;
+        while (counter > 0)
+        {
+            yield return new WaitForSeconds(1f);
+            counter--;
+        }
+        movSpeed = 2.5f;
+    }
+    IEnumerator DeactivateJumpBuff()
+    {
+        float counter;
+        counter = powerUp2.duration;
+        while (counter > 0)
+        {
+            yield return new WaitForSeconds(1f);
+            counter--;
+        }
+        jumpForce = 1f;
+    }
+
     private void OnCollisionEnter(Collision collision)
     {
         if (collision.gameObject.tag == "Wall")
@@ -195,6 +221,18 @@ public class PlayerController : MonoBehaviour
         if (other.gameObject.tag == "Roof")
         {
             underRoof = true;
+        }
+        if (other.gameObject.tag == "Speedb")
+        {
+            movSpeed = powerUp1.duration;
+            StartCoroutine(DeactivateSpeedBuff());
+            Destroy(other.gameObject);
+        }
+        if (other.gameObject.tag == "Jumpb")
+        {
+            jumpForce = powerUp2.duration;
+            StartCoroutine(DeactivateJumpBuff());
+            Destroy(other.gameObject);
         }
     }
 
