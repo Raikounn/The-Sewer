@@ -10,6 +10,7 @@ TagManager:
   - Ladder
   - Speedb
   - Jumpb
+  - StaminaBoost
   layers:
   - Default
   - TransparentFX
