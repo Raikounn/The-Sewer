@@ -1,6 +1,5 @@
 using System.Collections;
 using System.Collections.Generic;
-using UnityEditor.SceneTemplate;
 using UnityEngine;
 using UnityEngine.Experimental.Rendering;
 
@@ -10,7 +9,7 @@ public class PlayerController : MonoBehaviour
     [SerializeField] PhysicMaterial frictionator;
     [SerializeField] private Transform camTransform;
     private Vector3 velocity;
-    private float movSpeed = 2.5f;
+    [SerializeField] private float movSpeed = 2.5f;
     private float jumpForce = 1f;
     private float rotSpeed = 5f;
     private float gravity = -9.81f;
@@ -26,8 +25,12 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private bool underRoof = false;
     [SerializeField] private bool isCrouching = false;
 
+    [Header("Screamers")]
+    [SerializeField] AudioSource[] jumpscares = new AudioSource[3];
+
     PowerUp powerUp1;
     PowerUp powerUp2;
+    PowerUp powerUp3;
 
     private KeyCode sprintKey = KeyCode.LeftShift;
     private CharacterController controller;
@@ -36,8 +39,9 @@ public class PlayerController : MonoBehaviour
     {
         stamina = maxStamina;
         sprintSpeed = movSpeed;
-        powerUp1 = new PowerUp(10f, "JumpBoost");
-        powerUp2 = new PowerUp(5f, "SpeedBoost");
+        powerUp1 = new PowerUp(1f, "JumpBoost");
+        powerUp2 = new PowerUp(0.5f, "SpeedBoost");
+        powerUp3 = new PowerUp(5f, "StaminaBoost");
     }
 
     // Start is called before the first frame update
@@ -95,8 +99,20 @@ public class PlayerController : MonoBehaviour
         if (Input.GetButtonDown("Jump") && isGrounded)
         {
             velocity.y += Mathf.Sqrt(jumpForce * -2f * gravity);
+            Dice();
         }
+    }
+
+    void Dice()
+    {
+        float dado;
+        dado = Random.Range(0,99);
         
+        if (dado == 69)
+        {
+            jumpscares[Random.Range(0, jumpscares.Length)].Play();
+        }
+        else return;
     }
 
     // Sprint
@@ -106,7 +122,7 @@ public class PlayerController : MonoBehaviour
         {
             return;
         }
-        if (Input.GetKeyDown(sprintKey) && movSpeed == sprintSpeed)
+        if (Input.GetKeyDown(sprintKey))
         {
             if (!isRunning && stamina > 0)
             {
@@ -117,8 +133,9 @@ public class PlayerController : MonoBehaviour
                     StartCoroutine(DecreaseStamina());
                 }
             }
+            Dice();
         }
-        else if (Input.GetKeyUp(sprintKey) && movSpeed != sprintSpeed)
+        else if (Input.GetKeyUp(sprintKey))
         {
             if (isRunning || stamina != maxStamina)
             {
@@ -129,6 +146,7 @@ public class PlayerController : MonoBehaviour
                     StartCoroutine(RegenStamina());
                 }
             }
+            Dice();
         }
     }
 
@@ -138,10 +156,12 @@ public class PlayerController : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.LeftControl) && controller.height == 2f)
         {
             controller.height = 1f;
+            Dice();
         }
         else if (Input.GetKeyUp(KeyCode.LeftControl) && !underRoof && controller.height != 2f)
         {
             controller.height = 2f;
+            Dice();
         }
         if (Input.GetKeyDown(KeyCode.LeftControl)) isCrouching = true;
         if (Input.GetKeyUp(KeyCode.LeftControl)) isCrouching = false;
@@ -175,29 +195,6 @@ public class PlayerController : MonoBehaviour
         StartCoroutine(RegenStamina());
     }
 
-    IEnumerator DeactivateSpeedBuff()
-    {
-        float counter;
-        counter = powerUp1.duration;
-        while (counter > 0)
-        {
-            yield return new WaitForSeconds(1f);
-            counter--;
-        }
-        movSpeed = 2.5f;
-    }
-    IEnumerator DeactivateJumpBuff()
-    {
-        float counter;
-        counter = powerUp2.duration;
-        while (counter > 0)
-        {
-            yield return new WaitForSeconds(1f);
-            counter--;
-        }
-        jumpForce = 1f;
-    }
-
     private void OnCollisionEnter(Collision collision)
     {
         if (collision.gameObject.tag == "Wall")
@@ -224,15 +221,23 @@ public class PlayerController : MonoBehaviour
         }
         if (other.gameObject.tag == "Speedb")
         {
-            movSpeed = powerUp1.duration;
-            StartCoroutine(DeactivateSpeedBuff());
-            Destroy(other.gameObject);
+            movSpeed += powerUp1.duration;
+            sprintSpeed += powerUp1.duration;
+            other.gameObject.SetActive(false);
         }
         if (other.gameObject.tag == "Jumpb")
         {
-            jumpForce = powerUp2.duration;
-            StartCoroutine(DeactivateJumpBuff());
-            Destroy(other.gameObject);
+            jumpForce += powerUp2.duration;
+            other.gameObject.SetActive(false);
+        }
+        if (other.gameObject.tag == "StaminaBoost")
+        {
+            maxStamina += powerUp3.duration;
+            other.gameObject.SetActive(false);
+        }
+        if (other.gameObject.tag == "Finish")
+        {
+            Application.Quit();
         }
     }
 
